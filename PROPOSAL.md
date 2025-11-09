@@ -1,11 +1,49 @@
-# Project Proposal: The Impact of Dividends and Dividend Reinvestment on Long-Term Stock Market Performance
+# **Title:** *Predicting and Classifying Life Expectancy Using Socioeconomic, Health, and Environmental Indicators*  
 
-This project aims to analyze the impact of dividends and dividend reinvestment on the long-term performance of equities. The research will begin by comparing the performance of companies that distribute dividends with those that do not, in order to determine whether dividend-paying stocks provide superior risk-adjusted returns over extended periods. Historically, dividends have been a key component of total shareholder return, yet their relative contribution compared to capital gains remains a subject of debate. Understanding this relationship is essential for long-term investors and portfolio managers seeking to optimize performance and manage risk.
 
-The second part of the study will focus on the effect of dividend reinvestment. To achieve this, the analysis will contrast **“Price” indices**, which reflect only capital appreciation, with **“Total Return” indices**, which include reinvested dividends. By simulating the reinvestment of dividends over time, the project will assess how compounding affects long-term portfolio growth. The objective is to quantify how much of the total wealth created in equity markets is attributable to reinvested dividends rather than price appreciation alone.
+## **Problem Statement / Motivation**  
+Life expectancy represents one of the most comprehensive indicators of a country's well-being, combining the effects of health systems, economic development, education, and environmental factors. Understanding and predicting life expectancy is crucial for policymakers and researchers seeking to improve global living conditions.  
 
-Depending on the availability and quality of long-term historical data, the research may cover one or several major equity markets, including the **United States**, **Europe**, **Japan**, and **China**. These markets differ significantly in their economic structures, corporate cultures, and dividend distribution practices. For instance, U.S. firms traditionally emphasize consistent dividend growth, while European companies often exhibit higher yields but more cyclical payouts. In contrast, many Chinese and Japanese firms retain a larger share of earnings, resulting in lower dividend yields but potentially higher reinvestment in growth. Analyzing these distinctions will allow for a comparative understanding of how regional and structural factors influence the role of dividends in long-term wealth creation.
+This project aims to explore two complementary approaches:  
+1. **Regression modeling** – to predict the exact life expectancy value of each country.  
+2. **Classification modeling** – to categorize countries into life expectancy levels (*Low*, *Medium*, *High*).  
 
-The empirical analysis will rely on publicly available financial data obtained from sources such as **Yahoo Finance**, **FRED**, **MSCI**, and **STOXX**.
+By combining these two perspectives, the project not only provides quantitative predictions but also enables an interpretable categorization of global life expectancy patterns.
 
-Ultimately, this project seeks to determine whether dividend-paying stocks and dividend reinvestment significantly enhance long-term investment performance. The results could offer valuable insights into portfolio construction, asset allocation, and the strategic importance of dividends in global equity markets.
+
+## **Planned Approach and Technologies**  
+The dataset used will be the **“Global Country Information Dataset 2023”** from **Kaggle**, containing detailed socioeconomic, environmental, and health indicators for countries worldwide.  
+
+The project will be developed in **Python**, using **Pandas**, **NumPy**, **Matplotlib**, **Seaborn**, and **Scikit-learn**.  
+
+### **Part 1 – Regression Approach**  
+- **Goal:** Predict the numerical value of life expectancy.  
+- **Models:** Linear Regression, Random Forest Regressor.  
+- **Evaluation Metrics:** R², MAE, RMSE.  
+- **Visualization:** Actual vs. predicted plots, feature importance ranking, and regression residuals.  
+
+### **Part 2 – Classification Approach**  
+- **Goal:** Classify countries into life expectancy categories (e.g., *Low <65*, *Medium 65–75*, *High >75*).  
+- **Models:** Logistic Regression, Random Forest Classifier, Support Vector Machine (SVM).  
+- **Evaluation Metrics:** Accuracy, Precision, Recall, F1-score, Confusion Matrix.  
+- **Visualization:** Class distribution plots and regional classification maps.  
+
+
+## **Expected Challenges and How They Will Be Addressed**  
+- **Data Quality and Missing Values:** Addressed through imputation and normalization.   
+- **Class Imbalance (for classification):** Resampling techniques such as SMOTE or class weighting will be applied.  
+- **Overfitting:** Controlled using cross-validation and hyperparameter tuning.  
+
+
+## **Success Criteria**  
+The project will be considered successful if:  
+- Regression models achieve strong predictive accuracy (R² > 0.85).  
+- Classification models demonstrate reliable performance (accuracy > 80%).  
+- Visualizations clearly illustrate both numerical predictions and categorical trends across countries.  
+
+
+## **Stretch Goals (if time permits)**  
+- Integration of **ensemble learning techniques** (XGBoost, Gradient Boosting).  
+- Development of an **interactive Streamlit dashboard** for model comparison.  
+- **Geospatial visualization** using **Plotly** or **GeoPandas** to map global life expectancy patterns.  
+
