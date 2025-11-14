@@ -91,10 +91,19 @@ def clean_data(df):
                 mode_val = df_clean[col].mode()[0] if not df_clean[col].mode().empty else 'Unknown'
                 df_clean[col] = df_clean[col].fillna(mode_val)
                 print(f"   Filled '{col}' with mode value")
-    
+
+    # 5. Remove duplicates
+    print("\n5. Checking for duplicates...")
+    duplicates = df_clean.duplicated().sum()
+    if duplicates > 0:
+        df_clean = df_clean.drop_duplicates()
+        print(f"   Removed {duplicates} duplicate rows")
+    else:
+        print("   No duplicates found")
+
     # TODO: Handle outliers
 
-    print(f"\n6. Final cleaned dataset: {df_clean.shape[0]} rows, {df_clean.shape[1]} columns")
+    print(f"\n6. Cleaned dataset: {df_clean.shape[0]} rows, {df_clean.shape[1]} columns")
 
     return df_clean
 
@@ -108,13 +117,11 @@ def save_cleaned_data(df, output_path):
     print(f"\nCleaned data saved to: {output_path}")
     print(f"Final shape: {df.shape[0]} rows, {df.shape[1]} columns")
 
-def main(input_file=None, output_file=None):
+def main():
     """Main execution function"""
-    # File paths with defaults
-    if input_file is None:
-        input_file = 'data/world-data-2023.csv'
-    if output_file is None:
-        output_file = 'data/cleaned_world_data.csv'
+    # File paths
+    input_file = 'data/world-data-2023.csv'
+    output_file = 'data/cleaned_world_data.csv'
 
     # Load data
     df = load_data(input_file)
