@@ -48,22 +48,39 @@ def clean_data(df):
 
     df_clean = df.copy()
 
-    # 1. Handle missing values in Life expectancy
-    print("\n1. Handling missing values in Life expectancy...")
+    # 1. Convert string-formatted numeric columns
+    print("\n1. Converting string-formatted numeric columns...")
+    object_cols = df_clean.select_dtypes(include=['object']).columns
+    converted_count = 0
+
+    for col in object_cols:
+        if col in ['Country', 'Abbreviation', 'Capital/Major City', 'Currency-Code',
+                   'Largest city', 'Official language']:
+            continue
+
+        df_clean[col] = df_clean[col].astype(str).str.replace(',', '').str.replace('$', '').str.replace('%', '').str.strip()
+        df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce')
+        if df_clean[col].dtype in ['float64', 'int64']:
+            converted_count += 1
+
+    print(f"   Converted {converted_count} columns to numeric")
+
+    # 2. Handle missing values in Life expectancy
+    print("\n2. Handling missing values in Life expectancy...")
     if 'Life expectancy' in df_clean.columns:
         initial_rows = len(df_clean)
         df_clean = df_clean.dropna(subset=['Life expectancy'])
         removed = initial_rows - len(df_clean)
         print(f"   Removed {removed} rows with missing life expectancy values")
 
-    # 2. Identify numeric and categorical columns
+    # 3. Identify numeric and categorical columns
     numeric_cols = df_clean.select_dtypes(include=[np.number]).columns.tolist()
     categorical_cols = df_clean.select_dtypes(include=['object']).columns.tolist()
 
-    print(f"\n2. Identified {len(numeric_cols)} numeric columns and {len(categorical_cols)} categorical columns")
+    print(f"\n3. Identified {len(numeric_cols)} numeric columns and {len(categorical_cols)} categorical columns")
 
-    # 3. Handle missing values in numeric columns
-    print("\n3. Handling missing values in numeric columns...")
+    # 4. Handle missing values in numeric columns
+    print("\n4. Handling missing values in numeric columns...")
     for col in numeric_cols:
         if df_clean[col].isnull().sum() > 0:
             missing_pct = (df_clean[col].isnull().sum() / len(df_clean)) * 100
@@ -78,8 +95,8 @@ def clean_data(df):
                 df_clean[col] = df_clean[col].fillna(median_val)
                 print(f"   Filled '{col}' with median value ({median_val:.2f})")
 
-    # 4. Handle missing values in categorical columns
-    print("\n4. Handling missing values in categorical columns...")
+    # 5. Handle missing values in categorical columns
+    print("\n5. Handling missing values in categorical columns...")
     for col in categorical_cols:
         if df_clean[col].isnull().sum() > 0:
             missing_pct = (df_clean[col].isnull().sum() / len(df_clean)) * 100
@@ -93,8 +110,8 @@ def clean_data(df):
                 df_clean[col] = df_clean[col].fillna(mode_val)
                 print(f"   Filled '{col}' with mode value")
 
-    # 5. Remove duplicates
-    print("\n5. Checking for duplicates...")
+    # 6. Remove duplicates
+    print("\n6. Checking for duplicates...")
     duplicates = df_clean.duplicated().sum()
     if duplicates > 0:
         df_clean = df_clean.drop_duplicates()
@@ -102,8 +119,8 @@ def clean_data(df):
     else:
         print("   No duplicates found")
 
-    # 6. Handle outliers using IQR method for key numeric columns (IQR = Q3-Q1)
-    print("\n6. Detecting outliers in numeric columns...")
+    # 7. Handle outliers using IQR method for key numeric columns (IQR = Q3-Q1)
+    print("\n7. Detecting outliers in numeric columns...")
     numeric_cols = df_clean.select_dtypes(include=[np.number]).columns.tolist()
     outlier_summary = {}
 
@@ -125,7 +142,7 @@ def clean_data(df):
             print(f"     - {col}: {count} outliers")
         print(" Outliers are kept but flagged for awareness")
 
-    print(f"\n7. Cleaned dataset: {df_clean.shape[0]} rows, {df_clean.shape[1]} columns")
+    print(f"\n8. Cleaned dataset: {df_clean.shape[0]} rows, {df_clean.shape[1]} columns")
 
     return df_clean
 
