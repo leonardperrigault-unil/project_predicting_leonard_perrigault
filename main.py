@@ -1,5 +1,5 @@
 from src.data_cleaning import clean
-from src.models import linear_regression
+from src.models import linear_regression, test_model
 from src.config import SEPARATOR_WIDTH
 
 def main():
@@ -12,8 +12,9 @@ def main():
     print("2. Train Linear Regression")
     print("3. Train Lasso (L1)")
     print("4. Train Ridge (L2)")
+    print("5. Test Model")
 
-    choice = input("\nSelect operation (1-4): ").strip()
+    choice = input("\nSelect operation (1-5): ").strip()
 
     if choice == '1':
         clean.main()
@@ -23,8 +24,10 @@ def main():
         linear_regression.main(regularization="l1", optimize_hyperparams=True)
     elif choice == '4':
         linear_regression.main(regularization="l2", optimize_hyperparams=True)
+    elif choice == '5':
+        test_model.main()
     else:
-        print("Invalid choice. Please select 1-4.")
+        print("Invalid choice. Please select 1-5.")
 
 if __name__ == "__main__":
     main()
