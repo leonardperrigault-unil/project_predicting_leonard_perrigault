@@ -1,5 +1,5 @@
 from src.data_cleaning import clean
-from src.models import linear_regression, test_model, random_forest, xgboost_model
+from src.models import linear_regression, test_model, random_forest, xgboost_model, compare_models
 from src.config import SEPARATOR_WIDTH
 
 def main():
@@ -15,8 +15,9 @@ def main():
     print("5. Train Random Forest")
     print("6. Train XGBoost")
     print("7. Test Model")
+    print("8. Compare All Models")
 
-    choice = input("\nSelect operation (1-7): ").strip()
+    choice = input("\nSelect operation (1-8): ").strip()
 
     if choice == '1':
         clean.main()
@@ -32,8 +33,10 @@ def main():
         xgboost_model.main(optimize_hyperparams=True)
     elif choice == '7':
         test_model.main()
+    elif choice == '8':
+        compare_models.main()
     else:
-        print("Invalid choice. Please select 1-7.")
+        print("Invalid choice. Please select 1-8.")
 
 if __name__ == "__main__":
     main()
