@@ -1,0 +1,476 @@
+% Advanced Programming 2025 - Project Report
+% HEC Lausanne / UNIL
+\documentclass[11pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage[margin=1in]{geometry}
+\usepackage{fancyhdr}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{booktabs}
+
+% Code listing settings
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{pythonstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    language=Python
+}
+
+\lstset{style=pythonstyle}
+
+% Header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Advanced Programming 2025}
+\lhead{Project Report}
+\rfoot{Page \thepage}
+
+% Title page information
+\title{%
+    \Large \textbf{Advanced Programming 2025} \\
+    \vspace{0.5cm}
+    \LARGE \textbf{Explaining Life Expectancy through Feature Importance and Interpretable Machine Learning Models} \\
+    \vspace{0.3cm}
+    \large Final Project Report
+}
+\author{
+    Leonard Perrigault \\
+    \texttt{leonard.perrigault@unil.ch}
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Life expectancy is a fundamental indicator of a country's well-being, influenced by complex interactions between economic, social, and health factors. This project addresses the challenge of interpreting these relationships using five machine learning algorithms: Linear Regression, Lasso, Ridge, Random Forest, and XGBoost. Using the Global Country Information Dataset 2023 (187 countries, 35 features), we systematically compare model performance and provide interpretability through SHAP analysis and Variance Inflation Factor (VIF) analysis. Results demonstrate that Random Forest achieves the best performance (R² = 0.89), with infant mortality emerging as the most influential predictor across all models. GDP dependency analysis reveals that GDP per capita outperforms raw GDP, suggesting wealth distribution matters more than absolute economic size.
+\end{abstract}
+
+\vspace{0.5cm}
+\noindent\textbf{Keywords:} life expectancy prediction, interpretable machine learning, feature importance, SHAP analysis, multicollinearity, Python, scikit-learn
+
+\newpage
+\tableofcontents
+\newpage
+
+% ================== MAIN CONTENT ==================
+
+\section{Introduction}
+\label{sec:introduction}
+
+Life expectancy represents one of the most critical indicators of societal development and public health quality. While traditional approaches have identified GDP as a dominant predictor, many socioeconomic indicators exhibit strong correlations, creating multicollinearity challenges that obscure individual contributions of specific features.
+
+This project combines predictive modeling with interpretability analysis to understand which factors most significantly influence life expectancy. Rather than solely maximizing accuracy, we emphasize transparency through SHAP (SHapley Additive exPlanations) values and systematic feature importance comparison.
+
+\subsection{Objectives}
+
+The primary objectives are:
+\begin{itemize}
+    \item Systematically compare five machine learning algorithms for life expectancy prediction
+    \item Identify and analyze multicollinearity among features using VIF analysis
+    \item Provide model interpretability through SHAP values and feature importance analysis
+    \item Investigate the specific role of GDP by comparing models with/without GDP and with GDP per capita
+\end{itemize}
+
+\subsection{Report Organization}
+
+Section \ref{sec:literature} reviews relevant literature and tools; Section \ref{sec:methodology} details the dataset, preprocessing, and models; Section \ref{sec:results} presents experimental results; Section \ref{sec:discussion} interprets findings and discusses limitations; Section \ref{sec:conclusion} summarizes contributions and suggests future work.
+
+\section{Literature Review}
+\label{sec:literature}
+
+\subsection{Machine Learning for Health Prediction}
+
+Random Forest and Gradient Boosting methods (XGBoost) have demonstrated strong performance in health prediction tasks due to their ability to model non-linear relationships and feature interactions. While academic papers exist on these methods, our implementation relies primarily on scikit-learn \cite{sklearn} and XGBoost \cite{xgboost_doc} official documentation as reference sources.
+
+Linear models with regularization (Lasso and Ridge) remain valuable for interpretability. While theoretical foundations are established in the literature, we used scikit-learn documentation \cite{sklearn} for practical implementation guidance.
+
+\subsection{Interpretable Machine Learning}
+
+SHAP values provide a unified framework for interpreting machine learning models based on cooperative game theory. While academic papers establish the theoretical foundation, we primarily used the SHAP library documentation \cite{shap_doc} and practical tutorials \cite{shap_tutorial} for implementation.
+
+\subsection{Multicollinearity Detection}
+
+Variance Inflation Factor (VIF) quantifies multicollinearity by measuring how much the variance of a regression coefficient is inflated due to correlation with other predictors. DataCamp's tutorial \cite{vif_tutorial} provided practical guidance for VIF interpretation alongside statsmodels documentation.
+
+\section{Methodology}
+\label{sec:methodology}
+
+\subsection{Data Description}
+
+The analysis uses the \textbf{Global Country Information Dataset 2023} from Kaggle, providing socioeconomic, health, and environmental indicators. After preprocessing, the dataset contains:
+
+\begin{itemize}
+    \item \textbf{Observations:} 187 countries
+    \item \textbf{Features:} 35 total (29 numeric, 6 categorical)
+    \item \textbf{Target Variable:} Life expectancy (years)
+    \item \textbf{Feature Categories:} Economic (GDP, CPI, tax rates), Health (infant/maternal mortality, physicians), Demographic (population, birth rate, fertility), Education (enrollment rates), Environmental (CO2 emissions, forested area), Geographic (latitude, longitude)
+\end{itemize}
+
+\subsection{Data Preprocessing}
+
+A systematic cleaning pipeline addresses data quality issues:
+
+\begin{enumerate}
+    \item \textbf{String-to-Numeric Conversion:} Remove formatting symbols (\$, \%, commas) and convert to numeric types
+    \item \textbf{Missing Value Handling:} Drop rows with missing target; impute numeric features with median, categorical with mode; drop features with >50\% missing
+    \item \textbf{Quality Assurance:} Remove duplicates; detect outliers using IQR method (3×IQR threshold)
+    \item \textbf{Train-Test Split:} 80\% training (149 samples), 20\% testing (38 samples), fixed random seed (2904) for reproducibility
+\end{enumerate}
+
+\subsection{Machine Learning Models}
+
+Five regression algorithms were selected to represent different modeling paradigms:
+
+\subsubsection{Linear Regression}
+Standard ordinary least squares serves as baseline. Sensitive to multicollinearity but provides interpretable coefficients. Requires StandardScaler preprocessing.
+
+\subsubsection{Lasso Regression (L1 Regularization)}
+Adds L1 penalty encouraging sparsity through feature selection. Hyperparameter $\alpha$ optimized via GridSearchCV (5-fold CV) testing 50 values from $10^{-4}$ to $10^{2}$. This range covers typical regularization strengths from minimal (near-linear) to strong shrinkage.
+
+\subsubsection{Ridge Regression (L2 Regularization)}
+Uses L2 penalty shrinking coefficients without zeroing them. Same hyperparameter optimization protocol as Lasso.
+
+\subsubsection{Random Forest}
+Ensemble of decision trees trained on bootstrap samples with random feature subsets. Hyperparameters tuned: n\_estimators (100, 200, 300) covering sufficient trees for convergence; max\_depth (10, 20, 30, None) balancing underfitting/overfitting; min\_samples\_split (2, 5, 10) and min\_samples\_leaf (1, 2, 4) controlling tree complexity. No feature scaling required.
+
+\subsubsection{XGBoost}
+Sequential gradient boosting ensemble. Hyperparameters: n\_estimators (100, 200, 300); max\_depth (3, 5, 7, 10) preventing overfitting; learning\_rate (0.01, 0.1, 0.3) balancing training speed and accuracy; subsample and colsample\_bytree (0.8, 1.0) for regularization through sampling.
+
+All trained models are persisted using Python's pickle module \cite{pickle_doc}.
+
+\subsection{Evaluation Framework}
+
+\subsubsection{Performance Metrics}
+Three metrics assess predictive performance: R² (variance explained), MAE (mean absolute error in years), and RMSE (root mean squared error, penalizing large errors).
+
+\subsubsection{Feature Importance}
+Linear models: coefficient absolute values. Tree models: Gini importance (mean decrease in impurity).
+
+\subsubsection{SHAP Analysis}
+SHAP values provide consistent, theoretically-grounded feature contributions. Implementation uses TreeExplainer for Random Forest/XGBoost and LinearExplainer for linear models.
+
+\subsubsection{VIF Analysis}
+VIF for feature $j$: $\text{VIF}_j = \frac{1}{1 - R^2_j}$ where $R^2_j$ is from regressing feature $j$ on all others. Interpretation: VIF < 5 (low), 5-10 (moderate), >10 (high multicollinearity).
+
+\subsubsection{GDP Dependency Study}
+Three experimental conditions: (1) With GDP, (2) Without GDP, (3) GDP per capita (GDP/Population). All five models trained under each condition.
+
+\subsection{Implementation}
+
+Implemented in Python 3.10+ using pandas 2.3.3, numpy 2.3.4, scikit-learn 1.7.2, xgboost 3.1.1, shap 0.50.0, matplotlib 3.10.7 \cite{matplotlib_gallery}, seaborn 0.13.2, and statsmodels 0.14.5. Code organized modularly with centralized configuration, comprehensive pytest suite, and interactive CLI menu. Reproducibility ensured through fixed random seed and version-pinned dependencies.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Model Performance Comparison}
+
+Table \ref{tab:performance} summarizes test set performance across all models.
+
+\begin{table}[H]
+\centering
+\caption{Model Performance on Test Set (N=38 countries)}
+\label{tab:performance}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model} & \textbf{R²} & \textbf{MAE (years)} & \textbf{RMSE (years)} \\
+\midrule
+Random Forest  & 0.8910 & 1.8117 & 2.2836 \\
+XGBoost        & 0.8753 & 2.0327 & 2.4426 \\
+Lasso (L1)     & 0.8628 & 1.9509 & 2.5625 \\
+Ridge (L2)     & 0.8442 & 2.0071 & 2.7305 \\
+Linear         & 0.6529 & 2.5275 & 4.0752 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Random Forest achieves the best performance across all metrics (R² = 0.89, MAE = 1.81 years). Tree-based models substantially outperform linear models, suggesting non-linear relationships are important. Regularized models (Lasso/Ridge) dramatically improve upon standard linear regression (R² 0.86 vs 0.65), demonstrating regularization's importance given multicollinearity.
+
+Figure \ref{fig:metrics_comparison} visualizes performance across metrics, with best models highlighted in green.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{results/comparison/metrics_comparison.png}
+\caption{Model performance comparison across R², MAE, and RMSE. Green bars indicate best performance for each metric.}
+\label{fig:metrics_comparison}
+\end{figure}
+
+\subsection{SHAP Analysis: Interpretability}
+
+SHAP analysis on Random Forest (best model) identifies key predictors. Figure \ref{fig:shap_importance} shows feature importance by mean absolute SHAP value.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{results/random_forest/shap_importance.png}
+\caption{SHAP feature importance for Random Forest. Bar length indicates average impact on life expectancy predictions.}
+\label{fig:shap_importance}
+\end{figure}
+
+\textbf{Key findings:} Infant mortality dominates (mean |SHAP| $\approx$ 3.5), followed by maternal mortality ratio ($\approx$ 1.5). Birth rate, fertility rate, and gasoline price also show substantial influence. Notably, GDP appears lower in the ranking, suggesting its effect is mediated through health metrics.
+
+\subsection{Multicollinearity Analysis}
+
+VIF analysis reveals severe multicollinearity among demographic and economic features (Figure \ref{fig:vif}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{results/vif_analysis/vif_scores.png}
+\caption{Variance Inflation Factor analysis. Green (VIF<5): low multicollinearity; Orange (5-10): moderate; Red (>10): high. Birth Rate (VIF=56.08) and Urban population (VIF=52.74) show extreme correlation.}
+\label{fig:vif}
+\end{figure}
+
+High VIF features (>10): Birth Rate (56.08), Urban population (52.74), Fertility Rate (43.71), Population (28.30), CO2 Emissions (27.65), GDP (10.54). This explains why unregularized linear regression performs poorly (R²=0.65) while regularization (Lasso/Ridge) and tree-based methods handle multicollinearity effectively.
+
+\subsection{GDP Dependency Study}
+
+Figure \ref{fig:gdp_comparison} compares models under three GDP conditions.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{results/gdp_analysis/gdp_comparison.png}
+\caption{Model performance with GDP (blue), without GDP (orange), and with GDP per capita (green).}
+\label{fig:gdp_comparison}
+\end{figure}
+
+\textbf{Key findings:}
+\begin{itemize}
+    \item \textbf{GDP per capita generally outperforms raw GDP:} Lasso improves from R²=0.75 to 0.92; Ridge from 0.72 to 0.88; Random Forest from 0.85 to 0.88 (Note: These GDP analysis numbers are from separate experiments and may differ from baseline as they are not tune with Cross-validation in this case.)
+    \item \textbf{Linear regression performs better WITHOUT GDP:} R² increases from 0.65 to 0.80, indicating GDP introduces harmful multicollinearity
+    \item \textbf{XGBoost is robust:} Performance stable (R²$\approx$0.81) across conditions
+    \item \textbf{GDP per capita superior to raw GDP:} Per-capita wealth captures development better than absolute economic size
+\end{itemize}
+
+Models achieve reasonable performance WITHOUT GDP (R²$\approx$0.78-0.80), suggesting GDP's predictive power is largely mediated through correlated health and social features.
+
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Key Findings}
+
+\subsubsection{Model Performance}
+Random Forest's superiority (R²=0.89) confirms that non-linear relationships and feature interactions meaningfully contribute to predictions. Regularized linear models perform acceptably (R²=0.84-0.86), dramatically outperforming unregularized linear regression (R²=0.65), validating regularization's necessity under multicollinearity.
+
+\subsubsection{Feature Importance and Interpretability}
+Infant mortality consistently emerges as the dominant predictor across all models and interpretability methods. This makes intuitive sense: infant mortality reflects healthcare system quality, maternal/child health programs, sanitation, nutrition, and overall development. The relatively low importance of GDP in SHAP analysis is noteworthy—while GDP correlates with life expectancy, its effect appears mediated through health infrastructure rather than being directly causal.
+
+\subsubsection{Multicollinearity}
+VIF analysis reveals extreme multicollinearity (Birth Rate VIF=56.08, Urban population VIF=52.74) that devastates unregularized linear regression but is effectively handled by regularization and tree-based methods. This demonstrates algorithmic solutions can mitigate multicollinearity without explicit feature engineering.
+
+\subsubsection{Why PCA Was Not Used}
+Principal Component Analysis (PCA) is a common technique for handling multicollinearity by transforming correlated features into uncorrelated principal components. However, PCA was not implemented in this project for several reasons:
+
+\textbf{Limited benefit for tree-based models:} Random Forest and XGBoost (our best performers) are inherently robust to multicollinearity. Tree algorithms split on individual features at each node, making them insensitive to feature correlations. PCA would likely degrade performance by removing the interpretable feature structure that trees exploit effectively.
+
+\textbf{Regularization already addresses multicollinearity:} For linear models where multicollinearity is problematic, Lasso and Ridge regularization already provide an effective solution. Our results confirm this: regularized models achieve R²=0.84-0.86 compared to unregularized linear regression's R²=0.65. PCA would serve a redundant purpose.
+
+\textbf{Loss of interpretability:} A core objective of this project is interpretability. PCA transforms features into abstract principal components, making it impossible to say "infant mortality is the most important predictor." This directly contradicts our goal of providing actionable insights for policy-makers.
+
+In summary, PCA addresses multicollinearity (which regularization already handles) but would harm our best-performing models (trees) and eliminate interpretability. The chosen approach of regularization for linear models and tree-based methods for best performance provides superior results while maintaining transparency.
+
+\subsubsection{GDP Dependency}
+The finding that GDP per capita outperforms raw GDP has important policy implications: life expectancy correlates more strongly with wealth distribution than absolute economic output. Small wealthy countries (Luxembourg, Switzerland) achieve high life expectancy despite moderate total GDP, while large economies with lower per-capita income show lower life expectancy. The fact that models achieve R²$\approx$0.80 without GDP suggests its predictive power is redundant with health metrics.
+
+\subsection{Strengths and Limitations}
+
+\textbf{Strengths:} Systematic five-model comparison, comprehensive interpretability analysis (SHAP+VIF), strong predictive performance (R²=0.89), rigorous methodology (hyperparameter tuning, cross-validation), reproducible implementation (fixed seed, tests, version control).
+
+\textbf{Limitations:} Cross-sectional data captures correlations, not causation or temporal dynamics; small test set (38 samples) limits confidence interval precision; imputation may introduce bias; no subgroup analysis (OECD vs developing countries); SHAP only computed for Random Forest due to time constraints.
+
+\subsection{Practical Implications}
+
+\textbf{For policy-makers:} Prioritize maternal/child health investments; focus on per-capita wealth distribution over GDP growth; direct health infrastructure investment may be more effective than general economic growth.
+
+\textbf{For data scientists:} Test multiple algorithms for complementary insights; routinely check multicollinearity via VIF; combine multiple interpretability methods (coefficients, Gini, SHAP); consider domain-informed feature engineering (GDP per capita example).
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+This project successfully addressed its objectives: systematic model comparison identified Random Forest as best performer (R²=0.89); VIF analysis diagnosed severe multicollinearity explaining linear regression's poor performance; multiple interpretability methods converged on infant mortality as dominant predictor; GDP dependency experiments demonstrated GDP per capita outperforms raw GDP and models work without GDP entirely.
+
+\textbf{Main contributions:} (1) Comprehensive five-model comparison with consistent evaluation; (2) Multi-method interpretability analysis (SHAP, VIF, feature importance); (3) GDP dependency investigation revealing per-capita wealth superiority; (4) Reproducible, well-tested implementation.
+
+\textbf{Key takeaways:} Health metrics (infant/maternal mortality) predict life expectancy better than economic metrics (GDP); tree-based models substantially outperform linear methods; regularization essential for linear models under multicollinearity; GDP per capita superior to raw GDP; multiple interpretability methods provide more reliable insights than any single method.
+
+\textbf{Future directions:} Longitudinal analysis for causal inference; regional subgroup analysis (OECD vs developing); ensemble stacking; Bayesian hyperparameter optimization; external validation on different datasets; interactive dashboard for policy simulation; country-specific recommendation reports.
+
+\subsection{Project Usage}
+
+Complete installation instructions, usage guide, and workflow recommendations are provided in the project's README.md file. The interactive CLI menu supports all analyses presented in this report, with detailed explanations of each operation and recommended execution order.
+
+% ================== REFERENCES ==================
+\newpage
+\bibliographystyle{plain}
+\begin{thebibliography}{99}
+
+\bibitem{matplotlib_gallery}
+Matplotlib Development Team. (2024). Matplotlib Gallery. \url{https://matplotlib.org/stable/gallery/index.html}
+
+\bibitem{pickle_doc}
+Python Software Foundation. (2024). pickle — Python object serialization. \url{https://docs.python.org/3/library/pickle.html}
+
+\bibitem{shap_doc}
+SHAP Documentation. (2024). SHAP (SHapley Additive exPlanations). \url{https://shap.readthedocs.io/}
+
+\bibitem{shap_tutorial}
+Towards Data Science. (2024). Using SHAP Values to Explain How Your Machine Learning Model Works. \url{https://towardsdatascience.com/using-shap-values-to-explain-how-your-machine-learning-model-works-732b3f40e137}
+
+\bibitem{sklearn}
+Scikit-learn developers. (2024). scikit-learn: Machine Learning in Python. Version 1.7.2. \url{https://scikit-learn.org/}
+
+\bibitem{vif_tutorial}
+DataCamp. (2024). Variance Inflation Factor Tutorial. \url{https://www.datacamp.com/tutorial/variance-inflation-factor}
+
+\bibitem{xgboost_doc}
+XGBoost Contributors. (2024). XGBoost Documentation. \url{https://xgboost.readthedocs.io/}
+
+\end{thebibliography}
+
+% ================== APPENDICES ==================
+\newpage
+\appendix
+
+\section{Additional Visualizations}
+\label{app:visualizations}
+
+\subsection{Model Prediction Accuracy}
+
+Figures \ref{fig:rf_pred} and \ref{fig:ridge_pred} show actual vs predicted life expectancy for Random Forest and Ridge models.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+    \includegraphics[width=\textwidth]{results/random_forest/actual_vs_predicted.png}
+    \caption{Random Forest}
+    \label{fig:rf_pred}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+    \includegraphics[width=\textwidth]{results/ridge/actual_vs_predicted.png}
+    \caption{Ridge Regression}
+    \label{fig:ridge_pred}
+\end{subfigure}
+\caption{Actual vs predicted life expectancy. Points near diagonal indicate accurate predictions.}
+\end{figure}
+
+\subsection{Residual Analysis}
+
+Figures \ref{fig:rf_resid} and \ref{fig:ridge_resid} show residual distributions.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+    \includegraphics[width=\textwidth]{results/random_forest/residuals.png}
+    \caption{Random Forest}
+    \label{fig:rf_resid}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+    \includegraphics[width=\textwidth]{results/ridge/residuals.png}
+    \caption{Ridge Regression}
+    \label{fig:ridge_resid}
+\end{subfigure}
+\caption{Residual plots showing prediction errors distributed around zero.}
+\end{figure}
+
+\subsection{Feature Importance Comparison}
+
+Figure \ref{fig:feat_comp} compares top features across all models.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{results/comparison/feature_importance_comparison.png}
+\caption{Top 10 features by importance across all models. Infant mortality consistently ranks first.}
+\label{fig:feat_comp}
+\end{figure}
+
+\subsection{SHAP Detailed Analysis}
+
+Figure \ref{fig:shap_summary} shows SHAP value distributions.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{results/random_forest/shap_summary.png}
+\caption{SHAP summary plot showing feature value distributions and impacts on predictions.}
+\label{fig:shap_summary}
+\end{figure}
+
+Figures \ref{fig:shap_dep} show SHAP dependence plots for top features.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.32\textwidth}
+    \includegraphics[width=\textwidth]{results/random_forest/shap_dependence_Infant mortality.png}
+    \caption{Infant mortality}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+    \includegraphics[width=\textwidth]{results/random_forest/shap_dependence_Maternal mortality ratio.png}
+    \caption{Maternal mortality}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+    \includegraphics[width=\textwidth]{results/random_forest/shap_dependence_Gasoline Price.png}
+    \caption{Gasoline Price}
+\end{subfigure}
+\caption{SHAP dependence plots showing relationships between feature values and their impact.}
+\label{fig:shap_dep}
+\end{figure}
+
+\section{Code Repository}
+\label{app:code}
+
+\noindent
+\textbf{GitHub Repository:} \url{https://github.com/leonardperrigault-unil/project_predicting_leonard_perrigault}
+
+\vspace{0.3cm}
+
+\noindent
+The complete codebase is available with the following structure:
+
+\begin{verbatim}
+project_predicting_leonard_perrigault/
+├── data/                    # Raw and cleaned data
+├── src/                     # Source code (cleaning, models, analysis)
+├── tests/                   # Pytest test suite
+├── saved_models/            # Trained models (.pkl)
+├── results/                 # Visualizations (.png)
+├── main.py                  # Interactive CLI menu
+├── requirements.txt         # Dependencies
+├── README.md                # Usage instructions
+└── AI_USAGE.md              # AI tools usage documentation
+\end{verbatim}
+
+Full installation, usage instructions, and workflow recommendations are documented in README.md.
+
+\end{document}

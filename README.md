@@ -258,13 +258,13 @@ project_predicting_leonard_perrigault/
 
 ## Key Results
 
-| Model          | R²   | MAE (years) | RMSE (years) |
-|----------------|------|-------------|--------------|
-| Random Forest  | 0.92 | 1.80        | 2.30         |
-| XGBoost        | 0.90 | 2.05        | 2.45         |
-| Lasso (L1)     | 0.87 | 1.95        | 2.55         |
-| Ridge (L2)     | 0.86 | 2.00        | 2.70         |
-| Linear         | 0.66 | 2.50        | 4.05         |
+| Model          | R²      | MAE (years) | RMSE (years) |
+|----------------|---------|-------------|--------------|
+| Random Forest  | 0.8910  | 1.8117      | 2.2836       |
+| XGBoost        | 0.8753  | 2.0327      | 2.4426       |
+| Lasso (L1)     | 0.8628  | 1.9509      | 2.5625       |
+| Ridge (L2)     | 0.8442  | 2.0071      | 2.7305       |
+| Linear         | 0.6529  | 2.5275      | 4.0752       |
 
 **Key Findings:**
 - **Infant mortality** is the most important predictor across all models
